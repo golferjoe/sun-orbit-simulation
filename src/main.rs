@@ -1,3 +1,4 @@
+mod constants;
 mod debug;
 mod sun;
 mod earth;
@@ -8,6 +9,7 @@ use crate::{debug::DebugPlugin, earth::EarthPlugin, sun::SunPlugin};
 
 fn main() {
     App::new()
+        .insert_resource(ClearColor(Color::BLACK))
         .add_plugins(DefaultPlugins.set(WindowPlugin {
             primary_window: Some(Window {
                 title: "My First Window".to_string(),
