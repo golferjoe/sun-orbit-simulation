@@ -1,11 +1,11 @@
 mod constants;
 mod debug;
+mod planet;
 mod sun;
-mod earth;
 
-use bevy::{prelude::*, window::WindowResolution};
+use bevy::{color::palettes::css::{BLUE, GRAY}, math::DVec2, prelude::*, window::WindowResolution};
 
-use crate::{debug::DebugPlugin, earth::EarthPlugin, sun::SunPlugin};
+use crate::{constants::{EARTH_MASS, EARTH_POS_X, EARTH_SIZE_PX, EARTH_VEL_Y, VENUS_MASS, VENUS_POS_X, VENUS_SIZE_PX, VENUS_VEL_Y}, debug::DebugPlugin, planet::{PlanetBundle, PlanetPlugin}, sun::SunPlugin};
 
 fn main() {
     App::new()
@@ -18,11 +18,30 @@ fn main() {
             }),
             ..Default::default()
         }))
-        .add_plugins((DebugPlugin, SunPlugin, EarthPlugin))
-        .add_systems(Startup, setup)
+        .add_plugins((DebugPlugin, SunPlugin, PlanetPlugin))
+        .add_systems(Startup, create_planets)
         .run();
 }
 
-fn setup(mut cmds: Commands) {
+fn create_planets(
+    mut cmds: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
+) {
     cmds.spawn(Camera2d);
+
+    cmds.spawn_batch([
+        // earth
+        PlanetBundle::new(
+            &mut meshes, &mut materials, EARTH_MASS,
+            DVec2::new(EARTH_POS_X, 0.0), DVec2::new(0.0, EARTH_VEL_Y),
+            Color::from(BLUE), EARTH_SIZE_PX,
+        ),
+        // venus
+        PlanetBundle::new(
+            &mut meshes, &mut materials,
+            VENUS_MASS, DVec2::new(VENUS_POS_X, 0.0), DVec2::new(0.0, VENUS_VEL_Y),
+            Color::from(GRAY), VENUS_SIZE_PX,
+        )
+    ]);
 }
