@@ -1,8 +1,11 @@
 use bevy::{math::DVec2, prelude::*};
 
-use crate::constants::{DISTANCE_SCALE, G, SUN_MASS, TIME_SCALE};
+use crate::{
+    constants::{DISTANCE_SCALE, TIME_SCALE},
+    math::physics::velocity_verlet,
+};
 
-#[derive(Component)]
+#[derive(Clone, Component)]
 pub struct Planet {
     pub mass: f64,
     pub position: DVec2,
@@ -28,7 +31,11 @@ impl PlanetBundle {
         px_size: f32,
     ) -> Self {
         Self {
-            planet: Planet { mass, position, velocity },
+            planet: Planet {
+                mass,
+                position,
+                velocity,
+            },
             mesh: Mesh2d(meshes.add(Circle::default())),
             material: MeshMaterial2d(materials.add(color)),
             transform: Transform::default()
@@ -59,32 +66,11 @@ fn update_planet_transforms(planets: Query<(&mut Transform, &Planet)>) {
     }
 }
 
-fn compute_acceleration(pos: DVec2, mass: f64) -> DVec2 {
-    // calculate the distance to earth from sun's center
-    // but because our sun is at (0.0, 0.0) we can omit it from equation
-    let d = DVec2::new(-pos.x, -pos.y);
-    let r = (d.x * d.x + d.y * d.y).sqrt(); // distance between sun's and earth's center (in meters)
-
-    // calculate gravitational forces (F) for each axis
-    let f = (G * ((SUN_MASS * mass) / (r * r))) * (d / r);
-
-    // calculate acceleration: F=ma -> a=F/m
-    f / mass
-}
-
-fn update_planet_physics(
-    time: Res<Time>,
-    planets: Query<&mut Planet>,
-) {
+fn update_planet_physics(time: Res<Time>, planets: Query<&mut Planet>) {
     for mut planet in planets {
         let dt = time.delta_secs_f64() * TIME_SCALE;
-
-        // using velocity verlet
-        let a1 = compute_acceleration(planet.position, planet.mass); // first acceleration
-        let v_temp = planet.velocity; // temporary velocity only for calculations
-        planet.position += v_temp * dt + 0.5 * a1 * dt * dt;
-
-        let a2 = compute_acceleration(planet.position, planet.mass); // second acceleration
-        planet.velocity += 0.5 * (a1 + a2) * dt;
+        let (pos_new, vel_new) = velocity_verlet(dt, planet.position, planet.velocity, planet.mass);
+        planet.position = pos_new;
+        planet.velocity = vel_new;
     }
 }
