@@ -15,20 +15,19 @@ pub struct Planet {
 #[derive(Bundle)]
 pub struct PlanetBundle {
     pub planet: Planet,
-    pub mesh: Mesh2d,
-    pub material: MeshMaterial2d<ColorMaterial>,
+    pub mesh: Mesh3d,
+    pub material: MeshMaterial3d<StandardMaterial>,
     pub transform: Transform,
 }
 
 impl PlanetBundle {
     pub fn new(
         meshes: &mut Assets<Mesh>,
-        materials: &mut Assets<ColorMaterial>,
+        materials: &mut Assets<StandardMaterial>,
         mass: f64,
         position: DVec2,
         velocity: DVec2,
         color: Color,
-        px_size: f32,
     ) -> Self {
         Self {
             planet: Planet {
@@ -36,11 +35,13 @@ impl PlanetBundle {
                 position,
                 velocity,
             },
-            mesh: Mesh2d(meshes.add(Circle::default())),
-            material: MeshMaterial2d(materials.add(color)),
-            transform: Transform::default()
-                .with_translation(Vec3::new(position.x as f32, position.y as f32, 0.0))
-                .with_scale(Vec3::splat(px_size)),
+            mesh: Mesh3d(meshes.add(Sphere::new(1.5))),
+            material: MeshMaterial3d(materials.add(color)),
+            transform: Transform::default().with_translation(Vec3::new(
+                position.x as f32,
+                position.y as f32,
+                0.0,
+            )),
         }
     }
 }
@@ -62,7 +63,7 @@ fn update_planet_transforms(planets: Query<(&mut Transform, &Planet)>) {
 
         // using explicit conversion so we dont mix the precision
         transform.translation.x = (pos.x / DISTANCE_SCALE) as f32;
-        transform.translation.y = (pos.y / DISTANCE_SCALE) as f32;
+        transform.translation.z = (pos.y / DISTANCE_SCALE) as f32;
     }
 }
 

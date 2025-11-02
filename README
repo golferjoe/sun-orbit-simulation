@@ -1,4 +1,4 @@
-A simple simulation of Earth's orbit around the Sun using
+A simple simulation of planets, in our solar system, orbiting around the Sun using
 basic physics, Newton's law of gravitation and Velocity Verlet.
 
 Rendered using Bevy game engine.
@@ -7,7 +7,7 @@ To Do:
 - [x] clean the code a bit, maybe use more components and plugins to separate the rendering from physics
 - [x] display a planet's orbit with line
 - [x] display information like time scale, distance scale, revolutions, etc
-- [ ] make it 3D with camera centered at sun and user can rotate/zoom viewport using mouse
+- [x] make it 3D with camera centered at sun and user can rotate/zoom viewport using mouse
 - [ ] add "real" textures or use cool shaders to make it look cartoon-ish
 - [ ] add earth tilt with "sun-side" shown
 - [ ] add all planets from our solar system

@@ -10,7 +10,7 @@ use bevy::{
     },
     ecs::{
         component::Component,
-        system::{Commands, Query, ResMut},
+        system::{Commands, Query, ResMut, Single},
     },
     gizmos::{
         AppGizmoBuilder,
@@ -18,7 +18,7 @@ use bevy::{
         gizmos::Gizmos,
     },
     log::info,
-    math::{DVec2, Vec2, Vec3, primitives::Rectangle},
+    math::{DVec2, Vec3, primitives::Rectangle},
     mesh::{Mesh, Mesh2d},
     sprite_render::{ColorMaterial, MeshMaterial2d},
     transform::components::Transform,
@@ -43,7 +43,6 @@ impl Plugin for OrbitPlugin {
         app.insert_gizmo_config(
             DefaultGizmoConfigGroup,
             GizmoConfig {
-                render_layers: RenderLayers::layer(1),
                 line: GizmoLineConfig {
                     width: LINE_WIDTH,
                     ..Default::default()
@@ -61,16 +60,15 @@ impl Plugin for OrbitPlugin {
 struct Quarter(DRect);
 
 #[derive(Component)]
-struct PlanetOrbit(Vec<Vec2>);
+struct PlanetOrbit(Vec<Vec3>);
 
 // the thing im doing here is not ideal. if the planet's orbit is further than rectangles then we will have unknown quarters
 fn create_quarters(
-    windows: Query<&Window>,
+    window: Single<&Window>,
     mut cmds: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
-    let window = windows.single().unwrap();
     let window_width = window.resolution.width() as f64;
     let window_height = window.resolution.height() as f64;
 
@@ -129,6 +127,7 @@ fn create_orbit_points(mut cmds: Commands, planets: Query<&Planet>, quarters: Qu
         let orbit_points_scaled = orbit_points
             .iter()
             .map(|p| (p / DISTANCE_SCALE).as_vec2())
+            .map(|p| Vec3::new(p.x, 0.0, p.y))
             .collect::<Vec<_>>();
 
         cmds.spawn(PlanetOrbit(orbit_points_scaled));
@@ -137,7 +136,7 @@ fn create_orbit_points(mut cmds: Commands, planets: Query<&Planet>, quarters: Qu
 
 fn draw_orbit_gizmos(mut gizmos: Gizmos, orbits: Query<&PlanetOrbit>) {
     for orbit in orbits {
-        gizmos.linestrip_2d(
+        gizmos.linestrip(
             orbit.0.clone(),
             Color::linear_rgba(1.0, 1.0, 1.0, LINE_ALPHA),
         );
@@ -175,7 +174,6 @@ fn compute_orbit(planet: &Planet, quarters: &[&Quarter]) -> Vec<DVec2> {
 
     // lets say we want to take only 400 points, we need to calculate which nth element we want to take in each iteration
     let take_nth = points.len() / MAX_POINTS;
-    info!("ORBIT POINTS | we take every {take_nth}th element");
 
     let mut filtered = every_nth_element(points, take_nth);
     // add starting point again so the line is closed loop
