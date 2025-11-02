@@ -15,7 +15,10 @@ use bevy::{
 
 use crate::{
     camera::CameraPlugin,
-    constants::{EARTH_MASS, EARTH_POS_X, EARTH_VEL_Y, VENUS_MASS, VENUS_POS_X, VENUS_VEL_Y},
+    constants::{
+        EARTH_MASS, EARTH_POS_X, EARTH_RADIUS, EARTH_VEL_Y, VENUS_MASS, VENUS_POS_X, VENUS_RADIUS,
+        VENUS_VEL_Y,
+    },
     debug::DebugPlugin,
     orbit::OrbitPlugin,
     planet::{PlanetBundle, PlanetPlugin},
@@ -26,7 +29,7 @@ fn main() {
     App::new()
         .add_plugins(DefaultPlugins.set(WindowPlugin {
             primary_window: Some(Window {
-                title: "My First Window".to_string(),
+                title: "3D Solar System Simulation".to_string(),
                 resolution: WindowResolution::new(1920, 1080),
                 ..Default::default()
             }),
@@ -57,6 +60,7 @@ fn create_planets(
             DVec2::new(EARTH_POS_X, 0.0),
             DVec2::new(0.0, EARTH_VEL_Y),
             Color::from(BLUE),
+            EARTH_RADIUS,
         ),
         // venus
         PlanetBundle::new(
@@ -66,6 +70,7 @@ fn create_planets(
             DVec2::new(VENUS_POS_X, 0.0),
             DVec2::new(0.0, VENUS_VEL_Y),
             Color::from(GRAY),
+            VENUS_RADIUS,
         ),
     ]);
 }

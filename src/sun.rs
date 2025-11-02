@@ -1,5 +1,7 @@
 use bevy::prelude::*;
 
+use crate::constants::SUN_RADIUS;
+
 pub struct SunPlugin;
 
 impl Plugin for SunPlugin {
@@ -18,7 +20,7 @@ fn setup(
         ..Default::default()
     });
 
-    let mesh = meshes.add(Sphere::new(2.0).mesh().ico(8).unwrap());
+    let mesh = meshes.add(Sphere::new(SUN_RADIUS).mesh().ico(8).unwrap());
 
     // create sun sphere
     cmds.spawn((Mesh3d(mesh), MeshMaterial3d(material), Transform::default()));

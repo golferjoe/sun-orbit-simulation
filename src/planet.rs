@@ -28,6 +28,7 @@ impl PlanetBundle {
         position: DVec2,
         velocity: DVec2,
         color: Color,
+        radius: f32,
     ) -> Self {
         Self {
             planet: Planet {
@@ -35,7 +36,7 @@ impl PlanetBundle {
                 position,
                 velocity,
             },
-            mesh: Mesh3d(meshes.add(Sphere::new(1.5))),
+            mesh: Mesh3d(meshes.add(Sphere::new(radius))),
             material: MeshMaterial3d(materials.add(color)),
             transform: Transform::default().with_translation(Vec3::new(
                 position.x as f32,

@@ -1,30 +1,39 @@
 // module containing debug plugin which displays debug information like FPS, frame time, etc
 
-use bevy::{diagnostic::{DiagnosticsStore, FrameTimeDiagnosticsPlugin}, prelude::*, text::FontSmoothing};
+use bevy::{
+    diagnostic::{DiagnosticsStore, FrameTimeDiagnosticsPlugin},
+    prelude::*,
+    text::FontSmoothing,
+};
 
-use crate::constants::{DISTANCE_SCALE, TIME_SCALE, TO_1_DAY, TO_1_MONTH};
+use crate::{
+    camera::{DEFAULT_DISTANCE, PointCamera},
+    constants::{TIME_SCALE, TO_1_DAY, TO_1_MONTH},
+};
 
 pub struct DebugPlugin;
 
 impl Plugin for DebugPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugins(FrameTimeDiagnosticsPlugin::default());
-        app.add_systems(Startup, create_text);
-        app.add_systems(Update, update_fps_text);
+        app.add_plugins(FrameTimeDiagnosticsPlugin::default())
+            .add_systems(Startup, create_text)
+            .add_systems(Update, (update_fps_text, update_camera_stats));
     }
 }
 
 #[derive(Component)]
 struct FpsText;
 
-fn create_text(
-    mut cmds: Commands,
-    assets: Res<AssetServer>,
-    windows: Query<&Window>,
-) {
-    let window = windows.single().unwrap();
-    let window_width = window.resolution.width();
+#[derive(Component)]
+struct PitchText;
 
+#[derive(Component)]
+struct YawText;
+
+#[derive(Component)]
+struct ZoomText;
+
+fn create_text(mut cmds: Commands, assets: Res<AssetServer>) {
     let font = TextFont {
         font: assets.load("fonts/Monocraft.ttf"),
         font_size: 23.0,
@@ -54,33 +63,57 @@ fn create_text(
         };
         spawn_text(builder, &font, format!("1 sec = {time_span}"));
 
-        // distance scale
-        let px_to_m = (DISTANCE_SCALE / window_width as f64).round();
-        spawn_text(builder, &font, format!("1px = {}m", group_digits(px_to_m as _, ' ')));
+        // camera stats
+        spawn_text_with_comp(builder, &font, "Pitch: ", PitchText);
+        spawn_text_with_comp(builder, &font, "Yaw: ", YawText);
+        spawn_text_with_comp(builder, &font, "Zoom: ", ZoomText);
     });
 }
 
 fn update_fps_text(
     diagnostics: Res<DiagnosticsStore>,
-    query: Query<&mut TextSpan, With<FpsText>>,
+    query: Single<&mut TextSpan, With<FpsText>>,
 ) {
-    for mut text in query {
-        if let Some(fps) = diagnostics.get(&FrameTimeDiagnosticsPlugin::FPS) && let Some(value) = fps.average() {
-            text.0 = format!("{}", value.round());
-        }
+    let mut text = query.into_inner();
+
+    if let Some(fps) = diagnostics.get(&FrameTimeDiagnosticsPlugin::FPS)
+        && let Some(value) = fps.average()
+    {
+        text.0 = format!("{}", value.round());
+    }
+}
+
+fn update_camera_stats(
+    mut texts: ParamSet<(
+        Single<&mut TextSpan, With<PitchText>>,
+        Single<&mut TextSpan, With<YawText>>,
+        Single<&mut TextSpan, With<ZoomText>>,
+    )>,
+    camera: Single<&PointCamera>,
+) {
+    // pitch
+    {
+        let mut text = texts.p0().into_inner();
+        text.0 = format!("{:.2}°", camera.pitch.to_degrees());
+    }
+
+    // yaw
+    {
+        let mut text = texts.p1().into_inner();
+        text.0 = format!("{:.2}°", camera.yaw.to_degrees());
+    }
+
+    // zoom
+    {
+        let mut text = texts.p2().into_inner();
+        let zoom = DEFAULT_DISTANCE / camera.distance;
+        text.0 = format!("{zoom:.2}x");
     }
 }
 
 // helper functions
-fn spawn_text(
-    builder: &mut ChildSpawnerCommands,
-    font: &TextFont,
-    text: impl Into<String>,
-) {
-    builder.spawn((
-        Text::new(text),
-        font.clone(),
-    ));
+fn spawn_text(builder: &mut ChildSpawnerCommands, font: &TextFont, text: impl Into<String>) {
+    builder.spawn((Text::new(text), font.clone()));
 }
 
 fn spawn_text_with_comp(
@@ -89,26 +122,9 @@ fn spawn_text_with_comp(
     label: &str,
     comp: impl Component,
 ) {
-    builder
-        .spawn((
-            Text::new(label),
-            font.clone(),
-        ))
-        .with_child((
-            TextSpan::default(),
-            font.clone(),
-            comp,
-        ));
-}
-
-fn group_digits(number: u64, separator: char) -> String {
-    let mut grouped = String::new();
-    let number_str = number.to_string();
-    for (i, ch) in number_str.char_indices() {
-        if i % 3 == 0 && i != 0 {
-            grouped.push(separator);
-        }
-        grouped.push(ch);
-    }
-    grouped
+    builder.spawn((Text::new(label), font.clone())).with_child((
+        TextSpan::default(),
+        font.clone(),
+        comp,
+    ));
 }

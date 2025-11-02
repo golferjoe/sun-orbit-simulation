@@ -18,3 +18,8 @@ pub const TO_1_MONTH: f64 = 2.6298e6;
 pub const TO_1_YEAR: f64 = 3.15576e7;
 
 pub const TIME_SCALE: f64 = TO_1_MONTH;
+
+// values for rendering, they're not used for physics
+pub const SUN_RADIUS: f32 = 3.0;
+pub const EARTH_RADIUS: f32 = 1.5;
+pub const VENUS_RADIUS: f32 = EARTH_RADIUS * 0.9499;

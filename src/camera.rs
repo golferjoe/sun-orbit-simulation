@@ -8,10 +8,17 @@ use bevy::{
 };
 
 const PITCH_LIMIT: f32 = FRAC_PI_2 - 0.01;
+const MIN_DISTANCE: f32 = 10.0;
+const MAX_DISTANCE: f32 = 100.0;
 
 const YAW_SENSITIVITY: f32 = 0.005;
 const PITCH_SENSITIVITY: f32 = 0.003;
-const ZOOM_SENSITIVITY: f32 = 0.5;
+const ZOOM_SENSITIVITY: f32 = 1.0;
+
+pub const DEFAULT_DISTANCE: f32 = 50.0;
+// both values below are in degrees
+const DEFAULT_PITCH: f32 = 35.0;
+const DEFAULT_YAW: f32 = -90.0;
 
 pub struct CameraPlugin;
 
@@ -23,18 +30,18 @@ impl Plugin for CameraPlugin {
 }
 
 #[derive(Component)]
-struct PointCamera {
-    distance: f32, // or radius or zoom, however you call it
-    yaw: f32,
-    pitch: f32,
+pub struct PointCamera {
+    pub distance: f32, // or radius or zoom, however you call it
+    pub pitch: f32,
+    pub yaw: f32,
 }
 
 impl PointCamera {
     pub fn new() -> Self {
         Self {
-            distance: 12.0,
-            yaw: 0.0,
-            pitch: 0.0,
+            distance: DEFAULT_DISTANCE,
+            pitch: DEFAULT_PITCH.to_radians() as f32,
+            yaw: DEFAULT_YAW.to_radians() as f32,
         }
     }
 }
@@ -74,6 +81,7 @@ fn camera_movement(
     }
 
     camera.distance -= mouse_scroll.delta.y * ZOOM_SENSITIVITY;
+    camera.distance = camera.distance.clamp(MIN_DISTANCE, MAX_DISTANCE);
 
     transform.translation.x = camera.distance * camera.pitch.cos() * camera.yaw.cos();
     transform.translation.y = camera.distance * camera.pitch.sin();
