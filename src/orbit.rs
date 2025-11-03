@@ -26,8 +26,10 @@ use bevy::{
 };
 
 use crate::{
-    constants::DISTANCE_SCALE,
-    math::{drect::DRect, physics::velocity_verlet},
+    math::{
+        drect::DRect,
+        physics::{scale_distance_to_bevy, velocity_verlet},
+    },
     planet::Planet,
 };
 
@@ -125,8 +127,8 @@ fn create_orbit_points(mut cmds: Commands, planets: Query<&Planet>, quarters: Qu
     for planet in planets {
         let orbit_points = compute_orbit(planet, &quarters_vec);
         let orbit_points_scaled = orbit_points
-            .iter()
-            .map(|p| (p / DISTANCE_SCALE).as_vec2())
+            .into_iter()
+            .map(|p| scale_distance_to_bevy(p))
             .map(|p| Vec3::new(p.x, 0.0, p.y))
             .collect::<Vec<_>>();
 
@@ -172,11 +174,10 @@ fn compute_orbit(planet: &Planet, quarters: &[&Quarter]) -> Vec<DVec2> {
         last_quarter = current_quarter;
     }
 
-    // lets say we want to take only 400 points, we need to calculate which nth element we want to take in each iteration
     let take_nth = points.len() / MAX_POINTS;
-
     let mut filtered = every_nth_element(points, take_nth);
-    // add starting point again so the line is closed loop
+
+    // add starting point again so the line is a closed loop
     filtered.push(filtered[0]);
     filtered
 }

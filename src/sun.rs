@@ -28,6 +28,9 @@ fn setup(
     // create light coming from it
     cmds.spawn((
         PointLight {
+            intensity: 10000000.0,
+            range: 10000.0,
+            radius: SUN_RADIUS,
             shadows_enabled: true,
             ..Default::default()
         },

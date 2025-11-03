@@ -1,8 +1,8 @@
 use bevy::{math::DVec2, prelude::*};
 
 use crate::{
-    constants::{DISTANCE_SCALE, TIME_SCALE},
-    math::physics::velocity_verlet,
+    constants::TIME_SCALE,
+    math::physics::{scale_distance_to_bevy, velocity_verlet},
 };
 
 #[derive(Clone, Component)]
@@ -60,11 +60,9 @@ impl Plugin for PlanetPlugin {
 
 fn update_planet_transforms(planets: Query<(&mut Transform, &Planet)>) {
     for (mut transform, planet) in planets {
-        let pos = planet.position;
-
-        // using explicit conversion so we dont mix the precision
-        transform.translation.x = (pos.x / DISTANCE_SCALE) as f32;
-        transform.translation.z = (pos.y / DISTANCE_SCALE) as f32;
+        let pos = scale_distance_to_bevy(planet.position);
+        transform.translation.x = pos.x;
+        transform.translation.z = pos.y;
     }
 }
 

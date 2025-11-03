@@ -9,11 +9,11 @@ use bevy::{
 
 const PITCH_LIMIT: f32 = FRAC_PI_2 - 0.01;
 const MIN_DISTANCE: f32 = 10.0;
-const MAX_DISTANCE: f32 = 100.0;
+const MAX_DISTANCE: f32 = 1000.0;
 
 const YAW_SENSITIVITY: f32 = 0.005;
 const PITCH_SENSITIVITY: f32 = 0.003;
-const ZOOM_SENSITIVITY: f32 = 1.0;
+const ZOOM_SENSITIVITY: f32 = 2.0;
 
 pub const DEFAULT_DISTANCE: f32 = 50.0;
 // both values below are in degrees

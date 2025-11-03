@@ -10,6 +10,6 @@ To Do:
 - [x] make it 3D with camera centered at sun and user can rotate/zoom viewport using mouse
 - [ ] add "real" textures or use cool shaders to make it look cartoon-ish
 - [ ] add earth tilt with "sun-side" shown
-- [ ] add all planets from our solar system
+- [x] add all planets from our solar system
 - [ ] add GUI with options that you can tweak at runtime, like time scale, distance scale, toggle orbit lines, toggle quarters, etc
 - [ ] recalculate each planet's orbit every nth update
