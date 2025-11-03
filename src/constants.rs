@@ -4,8 +4,8 @@ pub const G: f64 = 6.6743e-11;
 pub const SUN_MASS: f64 = 1.9885e30;
 
 pub const MERCURY_MASS: f64 = 3.3011e23;
-pub const MERCURY_POS_X: f64 = 5.791e10; // m
-pub const MERCURY_VEL_Y: f64 = 47_360.0;
+pub const MERCURY_POS_X: f64 = 69_820_000_000.0; // m
+pub const MERCURY_VEL_Y: f64 = 38_860.0;
 
 pub const VENUS_MASS: f64 = 4.8675e24;
 pub const VENUS_POS_X: f64 = 1.0821e11;
@@ -35,7 +35,7 @@ pub const NEPTUNE_MASS: f64 = 1.02409e26;
 pub const NEPTUNE_POS_X: f64 = 4.5e12;
 pub const NEPTUNE_VEL_Y: f64 = 5_450.0;
 
-pub const DISTANCE_SCALE: f64 = 1.0e10;
+pub const DISTANCE_SCALE: f64 = 0.5e10;
 
 pub const TO_1_DAY: f64 = 86_400.0;
 pub const TO_1_MONTH: f64 = 2.6298e6;
