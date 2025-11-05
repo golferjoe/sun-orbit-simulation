@@ -10,6 +10,7 @@ pub struct Planet {
     pub mass: f64,
     pub position: DVec2,
     pub velocity: DVec2,
+    pub orbit_points: Vec<Vec3>,
 }
 
 #[derive(Bundle)]
@@ -35,6 +36,7 @@ impl PlanetBundle {
                 mass,
                 position,
                 velocity,
+                orbit_points: vec![],
             },
             mesh: Mesh3d(meshes.add(Sphere::new(radius))),
             material: MeshMaterial3d(materials.add(color)),

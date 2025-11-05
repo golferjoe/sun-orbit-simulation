@@ -1,11 +1,6 @@
 use core::{f32, f64};
 
-use bevy::{
-    camera::visibility::RenderLayers,
-    color::palettes::css::{GREEN, MAGENTA, RED, YELLOW},
-    math::{DVec2, Vec2},
-    prelude::*,
-};
+use bevy::{math::DVec2, prelude::*};
 
 use crate::{
     math::{
@@ -17,8 +12,6 @@ use crate::{
 
 const MAX_POINTS: usize = 128;
 const LINE_WIDTH: f32 = 2.0;
-const LINE_ALPHA: f32 = 0.05;
-const SHOW_QUARTERS: bool = false;
 
 pub struct OrbitPlugin;
 
@@ -50,124 +43,156 @@ impl OrbitUpdateTimer {
     }
 }
 
-#[derive(Component)]
-struct Quarter(DRect);
+// #[derive(Component)]
+// struct ComputeOrbits(Task<Vec<Vec3>>);
 
-#[derive(Component)]
-struct PlanetOrbit {
-    planet: Planet,
-    orbit_points: Vec<Vec3>,
+#[derive(PartialEq, Component)]
+struct Quarter {
+    // Y direction (-1, 1) in which the current point will be ahead of starting position
+    direction: DVec2,
+    bounds: DRect,
 }
 
-// the thing im doing here is not ideal. if the planet's orbit is further than rectangles then we will have unknown quarters
-fn create_quarters(
-    window: Single<&Window>,
-    mut cmds: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
-) {
-    let window_width = window.resolution.width() as f64;
-    let window_height = window.resolution.height() as f64;
-
-    // create four rectangles with sun at the intersection
-    // all rects start from top-left point to bottom-right point
-    let top_right = DRect::new(
-        DVec2::new(0.0, f64::INFINITY),
-        DVec2::new(f64::INFINITY, 0.0),
-    );
-    let top_left = DRect::new(
-        DVec2::new(-f64::INFINITY, f64::INFINITY),
-        DVec2::new(0.0, 0.0),
-    );
-    let bottom_left = DRect::new(
-        DVec2::new(-f64::INFINITY, 0.0),
-        DVec2::new(0.0, -f64::INFINITY),
-    );
-    let bottom_right = DRect::new(
-        DVec2::new(0.0, 0.0),
-        DVec2::new(f64::INFINITY, -f64::INFINITY),
-    );
-
-    // display those rectangles
-    let positions = [top_right, top_left, bottom_left, bottom_right];
-    let colors = [
-        Color::from(RED),
-        Color::from(GREEN),
-        Color::from(MAGENTA),
-        Color::from(YELLOW),
+fn create_quarters(mut cmds: Commands) {
+    let quarters = [
+        // top right
+        Quarter {
+            direction: DVec2::new(-1.0, 0.0),
+            bounds: DRect::new(
+                DVec2::new(0.0, f64::INFINITY),
+                DVec2::new(f64::INFINITY, 0.0),
+            ),
+        },
+        // bottom right
+        Quarter {
+            direction: DVec2::new(0.0, 1.0),
+            bounds: DRect::new(
+                DVec2::new(0.0, 0.0),
+                DVec2::new(f64::INFINITY, -f64::INFINITY),
+            ),
+        },
+        // bottom left
+        Quarter {
+            direction: DVec2::new(1.0, 0.0),
+            bounds: DRect::new(
+                DVec2::new(-f64::INFINITY, 0.0),
+                DVec2::new(0.0, -f64::INFINITY),
+            ),
+        },
+        // top left
+        Quarter {
+            direction: DVec2::new(0.0, -1.0),
+            bounds: DRect::new(
+                DVec2::new(-f64::INFINITY, f64::INFINITY),
+                DVec2::new(0.0, 0.0),
+            ),
+        },
     ];
-    assert_eq!(positions.len(), colors.len());
 
-    for (rect, color) in positions.into_iter().zip(colors) {
-        let x = rect.min.x.clamp(-window_width, window_width) as f32;
-        let y = rect.min.y.clamp(-window_height, window_height) as f32;
-
-        let width = x.abs().max(window_width as f32);
-        let height = y.abs().max(window_height as f32);
-        info!("NEW QUARTER CREATED | position: ({x}, {y}) ; size: {width} x {height}");
-
-        cmds.spawn((
-            Mesh2d(meshes.add(Rectangle::new(width, height))),
-            MeshMaterial2d(materials.add(color)),
-            Transform::from_xyz(x + width / 2.0, y - height / 2.0, 0.0)
-                .with_scale(Vec3::splat(if SHOW_QUARTERS { 1.0 } else { 0.0 })),
-            Quarter(rect),
-            RenderLayers::layer(1),
-        ));
+    for quarter in quarters {
+        cmds.spawn(quarter);
     }
 }
 
-fn init_orbits(mut cmds: Commands, planets: Query<&Planet>, quarters: Query<&Quarter>) {
+fn init_orbits(planets: Query<&mut Planet>, quarters: Query<&Quarter>) {
     let quarters_vec = quarters.into_iter().collect::<Vec<_>>();
-    for planet in planets {
-        let orbit_points = compute_orbit(planet, &quarters_vec);
+
+    for mut planet in planets {
+        let orbit_points = compute_orbit(&planet, &quarters_vec);
         let orbit_points_scaled = orbit_points
             .into_iter()
             .map(|p| scale_distance_to_bevy(p))
             .map(|p| Vec3::new(p.x, 0.0, p.y))
             .collect::<Vec<_>>();
 
-        cmds.spawn(PlanetOrbit {
-            planet: planet.clone(),
-            orbit_points: orbit_points_scaled,
-        });
+        planet.orbit_points = orbit_points_scaled;
     }
 }
+
+// fn async_init_orbits(
+//     mut cmds: Commands,
+//     planets: Query<Entity, With<PlanetOrbit>>,
+//     quarters: Query<&Quarter>,
+// ) {
+//     let thread_pool = AsyncComputeTaskPool::get();
+//     for planet in planets {
+//         let task = thread_pool.spawn(async move { vec![Vec3::ZERO] });
+//         cmds.entity(planet).insert(ComputeOrbits(task));
+//     }
+// }
+
+// fn handle_async_orbits(tasks: Query<&mut ComputeOrbits>) {
+//     for mut task in tasks {
+//         if let Some(points) = check_ready(&mut task.0) {
+//             todo!()
+//         }
+//     }
+// }
 
 fn update_orbits(
     time: Res<Time>,
     mut timer: ResMut<OrbitUpdateTimer>,
-    orbits: Query<&mut PlanetOrbit>,
+    planets: Query<&mut Planet>,
     quarters: Query<&Quarter>,
 ) {
     if timer.0.tick(time.delta()).just_finished() {
         info!("Updating planet orbit trajectories");
         let quarters_vec = quarters.into_iter().collect::<Vec<_>>();
-        for mut orbit in orbits {
-            let orbit_points = compute_orbit(&orbit.planet, &quarters_vec);
+
+        for mut planet in planets {
+            let orbit_points = compute_orbit(&planet, &quarters_vec);
             let orbit_points_scaled = orbit_points
                 .into_iter()
                 .map(|p| scale_distance_to_bevy(p))
                 .map(|p| Vec3::new(p.x, 0.0, p.y))
                 .collect::<Vec<_>>();
 
-            orbit.orbit_points = orbit_points_scaled;
+            planet.orbit_points = orbit_points_scaled;
         }
     }
 }
 
-fn draw_orbit_gizmos(mut gizmos: Gizmos, orbits: Query<&PlanetOrbit>) {
-    for orbit in orbits {
+fn draw_orbit_gizmos(mut gizmos: Gizmos, planets: Query<&Planet>) {
+    for planet in planets {
         gizmos.linestrip(
-            orbit.orbit_points.clone(),
-            Color::linear_rgba(1.0, 1.0, 1.0, LINE_ALPHA),
+            planet.orbit_points.clone(),
+            Color::linear_rgba(0.05, 0.05, 0.05, 1.0),
         );
     }
 }
 
+fn find_quarter_idx(pos: DVec2, quarters: &[&Quarter]) -> usize {
+    for (i, quarter) in quarters.iter().enumerate() {
+        if quarter.bounds.contains(pos) {
+            return i;
+        }
+    }
+    assert!(false, "point not inside any quarter");
+    0
+}
+
 fn compute_orbit(planet: &Planet, quarters: &[&Quarter]) -> Vec<DVec2> {
+    let sub_quarter_overflow = |idx: usize| -> usize {
+        if idx > 0 && idx != 1 {
+            idx - 1
+        } else {
+            quarters.len() - 1
+        }
+    };
+    let add_quarter_overflow = |idx: usize| -> usize {
+        if idx >= quarters.len() - 1 {
+            0
+        } else {
+            idx + 1
+        }
+    };
+
     let mut planet = planet.clone();
-    let mut last_quarter = 0; // we start in the first quarter
+    let starting_position = planet.position;
+
+    let starting_quarter = find_quarter_idx(planet.position, quarters);
+    let mut last_quarter = starting_quarter;
+    let mut first = true;
 
     let mut points = vec![];
     loop {
@@ -178,28 +203,51 @@ fn compute_orbit(planet: &Planet, quarters: &[&Quarter]) -> Vec<DVec2> {
         planet.velocity = vel_new;
         points.push(pos_new);
 
-        // check in which quarter we are right now
-        let mut current_quarter = 0;
-        for (i, quarter) in quarters.iter().enumerate() {
-            if quarter.0.contains(pos_new) {
-                current_quarter = i;
-                break;
-            }
+        // check if we made full revolution
+        let current_quarter = find_quarter_idx(pos_new, quarters);
+        if current_quarter == starting_quarter
+            && last_quarter == add_quarter_overflow(starting_quarter)
+        {
+            first = false;
         }
 
-        // check if we made full revolution
-        if last_quarter != current_quarter && current_quarter == 0 {
+        last_quarter = current_quarter;
+        if !first && current_quarter == sub_quarter_overflow(starting_quarter) {
             break;
         }
-        last_quarter = current_quarter;
+    }
+
+    let mut last_point = None;
+    for (i, point) in points.clone().into_iter().enumerate().rev() {
+        let quarter = find_quarter_idx(point, quarters);
+
+        if quarter == last_quarter {
+            points.remove(i);
+        } else if quarter == starting_quarter {
+            let delta = point - starting_position;
+            let direction = quarters[quarter].direction;
+
+            let x_positive = delta.x.is_sign_positive();
+            let y_positive = delta.y.is_sign_positive();
+            if (x_positive && direction.x == 1.0)
+                || (!x_positive && direction.x == -1.0)
+                || (y_positive && direction.y == 1.0)
+                || (!y_positive && direction.y == -1.0)
+            {
+                last_point = Some(point);
+                points.remove(i);
+            }
+        } else {
+            break;
+        }
     }
 
     let take_nth = points.len() / MAX_POINTS;
-    let mut filtered = every_nth_element(points, take_nth);
-
-    // add starting point again so the line is a closed loop
-    filtered.push(filtered[0]);
-    filtered
+    let mut temp = every_nth_element(points, take_nth);
+    if let Some(p) = last_point {
+        temp.push(p);
+    }
+    temp
 }
 
 fn every_nth_element(mut values: Vec<DVec2>, n: usize) -> Vec<DVec2> {
