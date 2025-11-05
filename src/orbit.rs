@@ -1,28 +1,10 @@
 use core::{f32, f64};
 
 use bevy::{
-    app::{App, Plugin, PostStartup, Startup, Update},
-    asset::Assets,
     camera::visibility::RenderLayers,
-    color::{
-        Color,
-        palettes::css::{GREEN, MAGENTA, RED, YELLOW},
-    },
-    ecs::{
-        component::Component,
-        system::{Commands, Query, ResMut, Single},
-    },
-    gizmos::{
-        AppGizmoBuilder,
-        config::{DefaultGizmoConfigGroup, GizmoConfig, GizmoLineConfig},
-        gizmos::Gizmos,
-    },
-    log::info,
-    math::{DVec2, Vec3, primitives::Rectangle},
-    mesh::{Mesh, Mesh2d},
-    sprite_render::{ColorMaterial, MeshMaterial2d},
-    transform::components::Transform,
-    window::Window,
+    color::palettes::css::{GREEN, MAGENTA, RED, YELLOW},
+    math::{DVec2, Vec2},
+    prelude::*,
 };
 
 use crate::{
@@ -51,10 +33,20 @@ impl Plugin for OrbitPlugin {
                 },
                 ..Default::default()
             },
-        );
-        app.add_systems(Startup, create_quarters);
-        app.add_systems(PostStartup, create_orbit_points);
-        app.add_systems(Update, draw_orbit_gizmos);
+        )
+        .insert_resource(OrbitUpdateTimer::new())
+        .add_systems(Startup, create_quarters)
+        .add_systems(PostStartup, init_orbits)
+        .add_systems(Update, (update_orbits, draw_orbit_gizmos));
+    }
+}
+
+#[derive(Resource)]
+struct OrbitUpdateTimer(Timer);
+
+impl OrbitUpdateTimer {
+    fn new() -> Self {
+        Self(Timer::from_seconds(10.0, TimerMode::Repeating))
     }
 }
 
@@ -62,7 +54,10 @@ impl Plugin for OrbitPlugin {
 struct Quarter(DRect);
 
 #[derive(Component)]
-struct PlanetOrbit(Vec<Vec3>);
+struct PlanetOrbit {
+    planet: Planet,
+    orbit_points: Vec<Vec3>,
+}
 
 // the thing im doing here is not ideal. if the planet's orbit is further than rectangles then we will have unknown quarters
 fn create_quarters(
@@ -122,7 +117,7 @@ fn create_quarters(
     }
 }
 
-fn create_orbit_points(mut cmds: Commands, planets: Query<&Planet>, quarters: Query<&Quarter>) {
+fn init_orbits(mut cmds: Commands, planets: Query<&Planet>, quarters: Query<&Quarter>) {
     let quarters_vec = quarters.into_iter().collect::<Vec<_>>();
     for planet in planets {
         let orbit_points = compute_orbit(planet, &quarters_vec);
@@ -132,14 +127,39 @@ fn create_orbit_points(mut cmds: Commands, planets: Query<&Planet>, quarters: Qu
             .map(|p| Vec3::new(p.x, 0.0, p.y))
             .collect::<Vec<_>>();
 
-        cmds.spawn(PlanetOrbit(orbit_points_scaled));
+        cmds.spawn(PlanetOrbit {
+            planet: planet.clone(),
+            orbit_points: orbit_points_scaled,
+        });
+    }
+}
+
+fn update_orbits(
+    time: Res<Time>,
+    mut timer: ResMut<OrbitUpdateTimer>,
+    orbits: Query<&mut PlanetOrbit>,
+    quarters: Query<&Quarter>,
+) {
+    if timer.0.tick(time.delta()).just_finished() {
+        info!("Updating planet orbit trajectories");
+        let quarters_vec = quarters.into_iter().collect::<Vec<_>>();
+        for mut orbit in orbits {
+            let orbit_points = compute_orbit(&orbit.planet, &quarters_vec);
+            let orbit_points_scaled = orbit_points
+                .into_iter()
+                .map(|p| scale_distance_to_bevy(p))
+                .map(|p| Vec3::new(p.x, 0.0, p.y))
+                .collect::<Vec<_>>();
+
+            orbit.orbit_points = orbit_points_scaled;
+        }
     }
 }
 
 fn draw_orbit_gizmos(mut gizmos: Gizmos, orbits: Query<&PlanetOrbit>) {
     for orbit in orbits {
         gizmos.linestrip(
-            orbit.0.clone(),
+            orbit.orbit_points.clone(),
             Color::linear_rgba(1.0, 1.0, 1.0, LINE_ALPHA),
         );
     }

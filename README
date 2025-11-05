@@ -12,4 +12,6 @@ To Do:
 - [ ] add earth tilt with "sun-side" shown
 - [x] add all planets from our solar system
 - [ ] add GUI with options that you can tweak at runtime, like time scale, distance scale, toggle orbit lines, toggle quarters, etc
-- [ ] recalculate each planet's orbit every nth update
+- [x] recalculate each planet's orbit every nth update
+- [ ] use Einstein's general theory of relativity (field equations)
+- [x] add background stars
