@@ -8,32 +8,25 @@ use bevy::{
 
 use crate::{
     camera::{DEFAULT_DISTANCE, PointCamera},
-    constants::{TIME_SCALE, TO_1_DAY, TO_1_MONTH},
+    ui::egui::Gui,
 };
 
-pub struct DebugPlugin;
-
-impl Plugin for DebugPlugin {
-    fn build(&self, app: &mut App) {
-        app.add_plugins(FrameTimeDiagnosticsPlugin::default())
-            .add_systems(Startup, create_text)
-            .add_systems(Update, (update_fps_text, update_camera_stats));
-    }
-}
+#[derive(Component)]
+pub struct PerformanceText;
 
 #[derive(Component)]
-struct FpsText;
+pub struct FpsText;
 
 #[derive(Component)]
-struct PitchText;
+pub struct PitchText;
 
 #[derive(Component)]
-struct YawText;
+pub struct YawText;
 
 #[derive(Component)]
-struct ZoomText;
+pub struct ZoomText;
 
-fn create_text(mut cmds: Commands, assets: Res<AssetServer>) {
+pub fn create_text(mut cmds: Commands, assets: Res<AssetServer>) {
     let font = TextFont {
         font: assets.load("fonts/Monocraft.ttf"),
         font_size: 23.0,
@@ -52,25 +45,13 @@ fn create_text(mut cmds: Commands, assets: Res<AssetServer>) {
     ))
     .with_children(|builder| {
         spawn_text_with_comp(builder, &font, "FPS: ", FpsText);
-
-        // time scale
-        let time_span = if TIME_SCALE == TO_1_DAY {
-            "1 day"
-        } else if TIME_SCALE == TO_1_MONTH {
-            "1 month"
-        } else {
-            "1 year"
-        };
-        spawn_text(builder, &font, format!("1 sec = {time_span}"));
-
-        // camera stats
         spawn_text_with_comp(builder, &font, "Pitch: ", PitchText);
         spawn_text_with_comp(builder, &font, "Yaw: ", YawText);
         spawn_text_with_comp(builder, &font, "Zoom: ", ZoomText);
     });
 }
 
-fn update_fps_text(
+pub fn update_fps_text(
     diagnostics: Res<DiagnosticsStore>,
     query: Single<&mut TextSpan, With<FpsText>>,
 ) {
@@ -83,7 +64,9 @@ fn update_fps_text(
     }
 }
 
-fn update_camera_stats(
+pub fn update_camera_stats(
+    settings: Res<Gui>,
+    all_text: Query<&mut Node, With<PerformanceText>>,
     mut texts: ParamSet<(
         Single<&mut TextSpan, With<PitchText>>,
         Single<&mut TextSpan, With<YawText>>,
@@ -91,6 +74,14 @@ fn update_camera_stats(
     )>,
     camera: Single<&PointCamera>,
 ) {
+    for mut node in all_text {
+        node.display = if settings.show_performance {
+            Display::Block
+        } else {
+            Display::None
+        };
+    }
+
     // pitch
     {
         let mut text = texts.p0().into_inner();
@@ -111,20 +102,13 @@ fn update_camera_stats(
     }
 }
 
-// helper functions
-fn spawn_text(builder: &mut ChildSpawnerCommands, font: &TextFont, text: impl Into<String>) {
-    builder.spawn((Text::new(text), font.clone()));
-}
-
 fn spawn_text_with_comp(
     builder: &mut ChildSpawnerCommands,
     font: &TextFont,
     label: &str,
     comp: impl Component,
 ) {
-    builder.spawn((Text::new(label), font.clone())).with_child((
-        TextSpan::default(),
-        font.clone(),
-        comp,
-    ));
+    builder
+        .spawn((Text::new(label), font.clone(), PerformanceText))
+        .with_child((TextSpan::default(), font.clone(), comp));
 }

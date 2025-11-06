@@ -5,6 +5,7 @@ edition = "2024"
 
 [dependencies]
 bevy = { version = "0.17", features = ["dynamic_linking"] }
+bevy_egui = "0.38"
 
 # fix load times for debug builds
 [profile.dev]

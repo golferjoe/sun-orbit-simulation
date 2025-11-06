@@ -8,6 +8,7 @@ use bevy::{
     prelude::*,
     render::render_resource::{TextureViewDescriptor, TextureViewDimension},
 };
+use bevy_egui::input::egui_wants_any_pointer_input;
 
 const PITCH_LIMIT: f32 = FRAC_PI_2 - 0.01;
 const MIN_DISTANCE: f32 = 10.0;
@@ -28,8 +29,13 @@ pub struct CameraPlugin;
 
 impl Plugin for CameraPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, setup_camera)
-            .add_systems(Update, (camera_movement, setup_skybox));
+        app.add_systems(Startup, setup_camera).add_systems(
+            Update,
+            (
+                camera_movement.run_if(not(egui_wants_any_pointer_input)),
+                setup_skybox,
+            ),
+        );
     }
 }
 

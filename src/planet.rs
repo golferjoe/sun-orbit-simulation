@@ -1,8 +1,8 @@
 use bevy::{math::DVec2, prelude::*};
 
 use crate::{
-    constants::TIME_SCALE,
     math::physics::{scale_distance_to_bevy, velocity_verlet},
+    ui::egui::Gui,
 };
 
 #[derive(Clone, Component)]
@@ -68,9 +68,11 @@ fn update_planet_transforms(planets: Query<(&mut Transform, &Planet)>) {
     }
 }
 
-fn update_planet_physics(time: Res<Time>, planets: Query<&mut Planet>) {
+fn update_planet_physics(settings: Res<Gui>, time: Res<Time>, planets: Query<&mut Planet>) {
+    let time_scale = settings.time_scale.to_seconds();
+
     for mut planet in planets {
-        let dt = time.delta_secs_f64() * TIME_SCALE;
+        let dt = time.delta_secs_f64() * time_scale;
         let (pos_new, vel_new) = velocity_verlet(dt, planet.position, planet.velocity, planet.mass);
         planet.position = pos_new;
         planet.velocity = vel_new;

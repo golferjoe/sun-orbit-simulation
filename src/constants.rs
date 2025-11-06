@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 pub const G: f64 = 6.6743e-11;
 pub const SUN_MASS: f64 = 1.9885e30;
 
@@ -36,12 +34,6 @@ pub const NEPTUNE_POS_X: f64 = 4.5e12;
 pub const NEPTUNE_VEL_Y: f64 = 5_450.0;
 
 pub const DISTANCE_SCALE: f64 = 0.5e10;
-
-pub const TO_1_DAY: f64 = 86_400.0;
-pub const TO_1_MONTH: f64 = 2.6298e6;
-pub const TO_1_YEAR: f64 = 3.15576e7;
-
-pub const TIME_SCALE: f64 = TO_1_MONTH;
 
 // values for rendering, they're not used for physics
 pub const SUN_RADIUS: f32 = 3.0;

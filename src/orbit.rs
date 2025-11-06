@@ -8,6 +8,7 @@ use crate::{
         physics::{scale_distance_to_bevy, velocity_verlet},
     },
     planet::Planet,
+    ui::egui::Gui,
 };
 
 const MAX_POINTS: usize = 128;
@@ -152,12 +153,14 @@ fn update_orbits(
     }
 }
 
-fn draw_orbit_gizmos(mut gizmos: Gizmos, planets: Query<&Planet>) {
-    for planet in planets {
-        gizmos.linestrip(
-            planet.orbit_points.clone(),
-            Color::linear_rgba(0.05, 0.05, 0.05, 1.0),
-        );
+fn draw_orbit_gizmos(settings: Res<Gui>, mut gizmos: Gizmos, planets: Query<&Planet>) {
+    if settings.show_orbits {
+        for planet in planets {
+            gizmos.linestrip(
+                planet.orbit_points.clone(),
+                Color::linear_rgba(0.05, 0.05, 0.05, 1.0),
+            );
+        }
     }
 }
 

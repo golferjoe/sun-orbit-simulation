@@ -1,10 +1,10 @@
 mod camera;
 mod constants;
-mod debug;
 mod math;
 mod orbit;
 mod planet;
 mod sun;
+mod ui;
 
 use bevy::{
     color::palettes::{
@@ -26,10 +26,10 @@ use crate::{
         URANUS_MASS, URANUS_POS_X, URANUS_RADIUS, URANUS_VEL_Y, VENUS_MASS, VENUS_POS_X,
         VENUS_RADIUS, VENUS_VEL_Y,
     },
-    debug::DebugPlugin,
     orbit::OrbitPlugin,
     planet::{PlanetBundle, PlanetPlugin},
     sun::SunPlugin,
+    ui::plugin::UiPlugin,
 };
 
 fn main() {
@@ -42,13 +42,7 @@ fn main() {
             }),
             ..Default::default()
         }))
-        .add_plugins((
-            CameraPlugin,
-            DebugPlugin,
-            SunPlugin,
-            PlanetPlugin,
-            OrbitPlugin,
-        ))
+        .add_plugins((UiPlugin, CameraPlugin, SunPlugin, PlanetPlugin, OrbitPlugin))
         .add_systems(Startup, create_planets)
         .run();
 }
