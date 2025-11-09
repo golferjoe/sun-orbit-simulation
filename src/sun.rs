@@ -11,12 +11,16 @@ impl Plugin for SunPlugin {
 }
 
 fn setup(
+    asset_server: Res<AssetServer>,
     mut cmds: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
+    let texture = asset_server.load("textures/sun.jpg");
+
     let material = materials.add(StandardMaterial {
-        emissive: LinearRgba::rgb(0.9, 0.4, 0.0),
+        base_color_texture: Some(texture),
+        unlit: true,
         ..Default::default()
     });
 
@@ -28,10 +32,10 @@ fn setup(
     // create light coming from it
     cmds.spawn((
         PointLight {
-            intensity: 10000000.0,
+            intensity: 100000000.0,
             range: 10000.0,
             radius: SUN_RADIUS,
-            shadows_enabled: true,
+            shadows_enabled: false,
             ..Default::default()
         },
         Transform::default(),

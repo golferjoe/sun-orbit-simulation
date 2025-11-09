@@ -24,14 +24,17 @@ pub struct PlanetBundle {
 
 impl PlanetBundle {
     pub fn new(
+        asset_server: &Res<AssetServer>,
         meshes: &mut Assets<Mesh>,
         materials: &mut Assets<StandardMaterial>,
         mass: f64,
         position: DVec2,
         velocity: DVec2,
-        color: Color,
         radius: f32,
+        texture_path: &str,
     ) -> Self {
+        let texture_handle = asset_server.load(texture_path.to_string());
+
         Self {
             planet: Planet {
                 mass,
@@ -41,7 +44,10 @@ impl PlanetBundle {
                 orbit_points: vec![],
             },
             mesh: Mesh3d(meshes.add(Sphere::new(radius))),
-            material: MeshMaterial3d(materials.add(color)),
+            material: MeshMaterial3d(materials.add(StandardMaterial {
+                base_color_texture: Some(texture_handle),
+                ..Default::default()
+            })),
             transform: Transform::default().with_translation(Vec3::new(
                 position.x as f32,
                 position.y as f32,

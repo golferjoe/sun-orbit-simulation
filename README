@@ -3,15 +3,12 @@ basic physics, Newton's law of gravitation and Velocity Verlet.
 
 Rendered using Bevy game engine.
 
+Skybox from: https://tools.wwwtyro.net/space-3d/index.html
+Textures from: https://www.solarsystemscope.com/textures/
+
 To Do:
-- [x] clean the code a bit, maybe use more components and plugins to separate the rendering from physics
-- [x] display a planet's orbit with line
-- [x] display information like time scale, distance scale, revolutions, etc
-- [x] make it 3D with camera centered at sun and user can rotate/zoom viewport using mouse
-- [ ] add "real" textures or use cool shaders to make it look cartoon-ish
-- [x] add all planets from our solar system
-- [x] add GUI with options that you can tweak at runtime, like time scale, distance scale, toggle orbit lines, toggle quarters, etc
-- [x] recalculate each planet's orbit every nth update
+- [x] add "real" textures or use cool shaders to make it look cartoon-ish
+- [ ] add saturn rings
+- [ ] add few moons
+- [ ] use real orbits (irl they're not on the same axis plane)
 - [ ] use Einstein's general theory of relativity (field equations)
-- [x] add background stars
-- [x] fix: app crashes when you use 1 year simulation time

@@ -6,15 +6,7 @@ mod planet;
 mod sun;
 mod ui;
 
-use bevy::{
-    color::palettes::{
-        css::{BLUE, GRAY, ORANGE, ORANGE_RED, WHITE_SMOKE, YELLOW_GREEN},
-        tailwind::BLUE_300,
-    },
-    math::DVec2,
-    prelude::*,
-    window::WindowResolution,
-};
+use bevy::{math::DVec2, prelude::*, window::WindowResolution};
 
 use crate::{
     camera::CameraPlugin,
@@ -49,6 +41,7 @@ fn main() {
 
 fn create_planets(
     mut cmds: Commands,
+    asset_server: Res<AssetServer>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
@@ -57,57 +50,70 @@ fn create_planets(
             MERCURY_MASS,
             MERCURY_POS_X,
             MERCURY_VEL_Y,
-            GRAY,
             MERCURY_RADIUS,
+            "textures/mercury.jpg",
         ),
         (
             VENUS_MASS,
             VENUS_POS_X,
             VENUS_VEL_Y,
-            WHITE_SMOKE,
             VENUS_RADIUS,
+            "textures/venus.jpg",
         ),
-        (EARTH_MASS, EARTH_POS_X, EARTH_VEL_Y, BLUE, EARTH_RADIUS),
-        (MARS_MASS, MARS_POS_X, MARS_VEL_Y, ORANGE, MARS_RADIUS),
+        (
+            EARTH_MASS,
+            EARTH_POS_X,
+            EARTH_VEL_Y,
+            EARTH_RADIUS,
+            "textures/earth.jpg",
+        ),
+        (
+            MARS_MASS,
+            MARS_POS_X,
+            MARS_VEL_Y,
+            MARS_RADIUS,
+            "textures/mars.jpg",
+        ),
         (
             JUPITER_MASS,
             JUPITER_POS_X,
             JUPITER_VEL_Y,
-            ORANGE_RED,
             JUPITER_RADIUS,
+            "textures/jupiter.jpg",
         ),
         (
             SATURN_MASS,
             SATURN_POS_X,
             SATURN_VEL_Y,
-            YELLOW_GREEN,
             SATURN_RADIUS,
+            "textures/saturn.jpg",
         ),
         (
             URANUS_MASS,
             URANUS_POS_X,
             URANUS_VEL_Y,
-            WHITE_SMOKE,
             URANUS_RADIUS,
+            "textures/uranus.jpg",
         ),
         (
             NEPTUNE_MASS,
             NEPTUNE_POS_X,
             NEPTUNE_VEL_Y,
-            BLUE_300,
             NEPTUNE_RADIUS,
+            "textures/neptune.jpg",
         ),
     ];
 
-    for (mass, pos, vel, color, radius) in planets {
+    for (mass, pos, vel, radius, texture) in planets {
         cmds.spawn(PlanetBundle::new(
+            &asset_server,
             &mut meshes,
             &mut materials,
             mass,
             DVec2::new(pos, 0.0),
             DVec2::new(0.0, vel),
-            Color::from(color),
             radius,
+            texture,
         ));
     }
 }
