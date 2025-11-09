@@ -67,10 +67,10 @@ fn setup_camera(mut cmds: Commands, assets: Res<AssetServer>) {
 
     cmds.spawn((
         Camera3d::default(),
-        Camera {
-            clear_color: ClearColorConfig::Custom(Color::BLACK),
-            ..Default::default()
-        },
+        // Camera {
+        //     clear_color: ClearColorConfig::Custom(Color::WHITE),
+        //     ..Default::default()
+        // },
         Transform::default().looking_at(Vec3::ZERO, Vec3::Y),
         Tonemapping::TonyMcMapface,
         Bloom::NATURAL,
@@ -79,7 +79,7 @@ fn setup_camera(mut cmds: Commands, assets: Res<AssetServer>) {
         PointCamera::new(),
         Skybox {
             image: skybox_handle.clone(),
-            brightness: 200.0,
+            brightness: 500.0,
             ..Default::default()
         },
     ));

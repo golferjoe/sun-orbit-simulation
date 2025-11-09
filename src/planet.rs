@@ -9,6 +9,7 @@ use crate::{
 pub struct Planet {
     pub mass: f64,
     pub position: DVec2,
+    pub previous_position: DVec2, // used for visual lerping
     pub velocity: DVec2,
     pub orbit_points: Vec<Vec3>,
 }
@@ -35,6 +36,7 @@ impl PlanetBundle {
             planet: Planet {
                 mass,
                 position,
+                previous_position: position,
                 velocity,
                 orbit_points: vec![],
             },
@@ -53,28 +55,37 @@ pub struct PlanetPlugin;
 
 impl Plugin for PlanetPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(
-            Update,
-            (update_planet_physics, update_planet_transforms).chain(),
-        );
+        app.insert_resource(Time::<Fixed>::from_hz(90.0))
+            .add_systems(FixedUpdate, update_planet_physics)
+            .add_systems(Update, update_planet_transforms);
     }
 }
 
-fn update_planet_transforms(planets: Query<(&mut Transform, &Planet)>) {
-    for (mut transform, planet) in planets {
-        let pos = scale_distance_to_bevy(planet.position);
-        transform.translation.x = pos.x;
-        transform.translation.z = pos.y;
-    }
-}
-
-fn update_planet_physics(settings: Res<Gui>, time: Res<Time>, planets: Query<&mut Planet>) {
+fn update_planet_physics(settings: Res<Gui>, time: Res<Time<Fixed>>, planets: Query<&mut Planet>) {
     let time_scale = settings.time_scale.to_seconds();
 
     for mut planet in planets {
+        planet.previous_position = planet.position;
+
         let dt = time.delta_secs_f64() * time_scale;
         let (pos_new, vel_new) = velocity_verlet(dt, planet.position, planet.velocity, planet.mass);
         planet.position = pos_new;
         planet.velocity = vel_new;
+    }
+}
+
+fn update_planet_transforms(
+    fixed_time: Res<Time<Fixed>>,
+    planets: Query<(&mut Transform, &Planet)>,
+) {
+    for (mut transform, planet) in planets {
+        let interpolated = scale_distance_to_bevy(
+            planet
+                .previous_position
+                .lerp(planet.position, fixed_time.overstep_fraction_f64()),
+        );
+
+        transform.translation.x = interpolated.x;
+        transform.translation.z = interpolated.y;
     }
 }
