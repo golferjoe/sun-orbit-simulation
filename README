@@ -15,4 +15,3 @@ To Do:
 - [ ] use Einstein's general theory of relativity (field equations)
 - [x] add background stars
 - [x] fix: app crashes when you use 1 year simulation time
-- [ ] async update planet orbits (not all at once)

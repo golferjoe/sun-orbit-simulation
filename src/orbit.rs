@@ -1,4 +1,5 @@
 use core::{f32, f64};
+use std::collections::VecDeque;
 
 use bevy::{math::DVec2, prelude::*};
 
@@ -11,6 +12,7 @@ use crate::{
     ui::egui::Gui,
 };
 
+const UPDATE_INTERVAL: f32 = 0.5; // every how many seconds should we compute next orbit in queue
 const MAX_POINTS: usize = 128;
 const LINE_WIDTH: f32 = 2.0;
 
@@ -36,16 +38,16 @@ impl Plugin for OrbitPlugin {
 }
 
 #[derive(Resource)]
+struct UpdateQueue(VecDeque<Entity>);
+
+#[derive(Resource)]
 struct OrbitUpdateTimer(Timer);
 
 impl OrbitUpdateTimer {
     fn new() -> Self {
-        Self(Timer::from_seconds(10.0, TimerMode::Repeating))
+        Self(Timer::from_seconds(UPDATE_INTERVAL, TimerMode::Repeating))
     }
 }
-
-// #[derive(Component)]
-// struct ComputeOrbits(Task<Vec<Vec3>>);
 
 #[derive(PartialEq, Component)]
 struct Quarter {
@@ -95,10 +97,16 @@ fn create_quarters(mut cmds: Commands) {
     }
 }
 
-fn init_orbits(planets: Query<&mut Planet>, quarters: Query<&Quarter>) {
+fn init_orbits(
+    mut cmds: Commands,
+    planets: Query<(Entity, &mut Planet)>,
+    quarters: Query<&Quarter>,
+) {
+    // first we compute first orbit for each planet and then insert them into the queue for next updates
+    let mut queue = VecDeque::new();
     let quarters_vec = quarters.into_iter().collect::<Vec<_>>();
 
-    for mut planet in planets {
+    for (entity, mut planet) in planets {
         let orbit_points = compute_orbit(&planet, &quarters_vec);
         let orbit_points_scaled = orbit_points
             .into_iter()
@@ -107,40 +115,26 @@ fn init_orbits(planets: Query<&mut Planet>, quarters: Query<&Quarter>) {
             .collect::<Vec<_>>();
 
         planet.orbit_points = orbit_points_scaled;
+
+        queue.push_back(entity);
     }
+
+    cmds.insert_resource(UpdateQueue(queue));
 }
-
-// fn async_init_orbits(
-//     mut cmds: Commands,
-//     planets: Query<Entity, With<PlanetOrbit>>,
-//     quarters: Query<&Quarter>,
-// ) {
-//     let thread_pool = AsyncComputeTaskPool::get();
-//     for planet in planets {
-//         let task = thread_pool.spawn(async move { vec![Vec3::ZERO] });
-//         cmds.entity(planet).insert(ComputeOrbits(task));
-//     }
-// }
-
-// fn handle_async_orbits(tasks: Query<&mut ComputeOrbits>) {
-//     for mut task in tasks {
-//         if let Some(points) = check_ready(&mut task.0) {
-//             todo!()
-//         }
-//     }
-// }
 
 fn update_orbits(
     time: Res<Time>,
     mut timer: ResMut<OrbitUpdateTimer>,
-    planets: Query<&mut Planet>,
+    mut queue: ResMut<UpdateQueue>,
+    mut planets: Query<&mut Planet>,
     quarters: Query<&Quarter>,
 ) {
     if timer.0.tick(time.delta()).just_finished() {
-        info!("Updating planet orbit trajectories");
         let quarters_vec = quarters.into_iter().collect::<Vec<_>>();
 
-        for mut planet in planets {
+        if let Some(entity) = queue.0.pop_front()
+            && let Ok(mut planet) = planets.get_mut(entity)
+        {
             let orbit_points = compute_orbit(&planet, &quarters_vec);
             let orbit_points_scaled = orbit_points
                 .into_iter()
@@ -149,6 +143,7 @@ fn update_orbits(
                 .collect::<Vec<_>>();
 
             planet.orbit_points = orbit_points_scaled;
+            queue.0.push_back(entity);
         }
     }
 }
