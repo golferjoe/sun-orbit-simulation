@@ -6,7 +6,12 @@ pub struct SunPlugin;
 
 impl Plugin for SunPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, setup);
+        app.insert_resource(AmbientLight {
+            color: Color::linear_rgb(0.05, 0.05, 0.05),
+            brightness: 1.0,
+            ..Default::default()
+        })
+        .add_systems(Startup, setup);
     }
 }
 
@@ -19,6 +24,7 @@ fn setup(
     let texture = asset_server.load("textures/sun.jpg");
 
     let material = materials.add(StandardMaterial {
+        emissive: LinearRgba::rgb(0.9, 0.4, 0.0),
         base_color_texture: Some(texture),
         unlit: true,
         ..Default::default()
@@ -32,12 +38,13 @@ fn setup(
     // create light coming from it
     cmds.spawn((
         PointLight {
-            intensity: 100000000.0,
-            range: 10000.0,
+            intensity: 100_000_000.0,
+            range: 10_000.0,
             radius: SUN_RADIUS,
             shadows_enabled: false,
+            color: Color::linear_rgb(1.0, 0.98, 0.9),
             ..Default::default()
         },
-        Transform::default(),
+        Transform::from_translation(Vec3::ZERO),
     ));
 }

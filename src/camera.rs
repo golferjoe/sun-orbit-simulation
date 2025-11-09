@@ -23,7 +23,7 @@ pub const DEFAULT_DISTANCE: f32 = 50.0;
 const DEFAULT_PITCH: f32 = 35.0;
 const DEFAULT_YAW: f32 = -90.0;
 
-const SKYBOX_PATH: &str = "stars_skybox.png";
+const SKYBOX_PATH: &str = "textures/skybox.png";
 
 pub struct CameraPlugin;
 
@@ -67,10 +67,6 @@ fn setup_camera(mut cmds: Commands, assets: Res<AssetServer>) {
 
     cmds.spawn((
         Camera3d::default(),
-        // Camera {
-        //     clear_color: ClearColorConfig::Custom(Color::WHITE),
-        //     ..Default::default()
-        // },
         Transform::default().looking_at(Vec3::ZERO, Vec3::Y),
         Tonemapping::TonyMcMapface,
         Bloom::NATURAL,
